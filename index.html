@@ -3,364 +3,1794 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>😂 Приколюшник с друзьями</title>
+    <title>🔥 EPIC MESSENGER - Чат с друзьями</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <style>
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --dark: #0f172a;
+            --light: #f8fafc;
         }
-        @keyframes spamPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); box-shadow: 0 0 30px red; }
+        
+        * {
+            font-family: 'Poppins', sans-serif;
         }
-        .message { animation: fadeIn 0.3s ease-out; }
-        .spam-active { animation: spamPulse 0.5s infinite; }
-        .joke-btn:hover { transform: rotate(-5deg) scale(1.1); }
+        
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Анимации */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.8); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .pulse-glow {
+            animation: pulse-glow 2s infinite;
+        }
+        
+        .shake-animation {
+            animation: shake 0.5s;
+        }
+        
+        .rainbow-text {
+            background: linear-gradient(90deg, #ff0000, #ff9900, #ffff00, #00ff00, #00ffff, #0000ff, #9900ff);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: rainbow 3s ease infinite;
+        }
+        
+        /* Кастомный скроллбар */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, var(--secondary), var(--accent));
+        }
+        
+        /* Сообщения */
+        .message-self {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 18px 18px 4px 18px;
+            margin-left: auto;
+        }
+        
+        .message-other {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 18px 18px 18px 4px;
+            margin-right: auto;
+            backdrop-filter: blur(10px);
+        }
+        
+        .message-system {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .message-spam {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border: 2px solid #fbbf24;
+            animation: pulse-glow 0.5s infinite;
+        }
+        
+        /* Эффекты */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .hover-lift {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Emoji picker */
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+        }
+        
+        .emoji-item {
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .emoji-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.2);
+        }
+        
+        /* Typing indicator */
+        .typing-dots {
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            margin: 0 2px;
+            background-color: #fff;
+            border-radius: 50%;
+            opacity: 0.4;
+            animation: typing 1.4s infinite both;
+        }
+        
+        .typing-dots span:nth-child(1) { animation-delay: 0s; }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 60%, 100% { opacity: 0.4; transform: translateY(0); }
+            30% { opacity: 1; transform: translateY(-5px); }
+        }
+        
+        /* Message reactions */
+        .reaction {
+            font-size: 0.8rem;
+            padding: 2px 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            margin-right: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .reaction:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        
+        /* Online indicator */
+        .online-indicator {
+            width: 10px;
+            height: 10px;
+            background: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Notification badge */
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            animation: shake 0.5s;
+        }
+        
+        /* Message status */
+        .message-status {
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+        
+        /* Loading skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 15px;
+            height: 15px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        /* Voice message */
+        .voice-message {
+            background: rgba(59, 130, 246, 0.2);
+            border-left: 4px solid #3b82f6;
+            padding: 10px 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .voice-wave {
+            display: flex;
+            align-items: center;
+            height: 30px;
+        }
+        
+        .voice-wave-bar {
+            width: 3px;
+            margin: 0 1px;
+            background: #3b82f6;
+            border-radius: 2px;
+            animation: voice-wave 1s ease-in-out infinite;
+        }
+        
+        @keyframes voice-wave {
+            0%, 100% { height: 5px; }
+            50% { height: 20px; }
+        }
+        
+        /* File upload */
+        .file-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+        
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+        
+        /* Dark mode */
+        .dark .dark\:bg-dark {
+            background-color: var(--dark);
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .message-self, .message-other {
+                max-width: 85%;
+            }
+            
+            .emoji-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* Admin crown */
+        .admin-crown {
+            color: #fbbf24;
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+        }
+        
+        /* Spam effect */
+        .spam-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+            background: rgba(239, 68, 68, 0.1);
+            animation: spamFlash 0.5s;
+        }
+        
+        @keyframes spamFlash {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        
+        /* Theme switcher */
+        .theme-dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .theme-dot:hover {
+            transform: scale(1.1);
+        }
+        
+        .theme-dot.active {
+            border-color: white;
+            box-shadow: 0 0 10px white;
+        }
+        
+        /* Progress bar */
+        .upload-progress {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .upload-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transition: width 0.3s ease;
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-purple-900 via-pink-800 to-red-900 min-h-screen text-white">
-    <div class="container mx-auto px-4 py-8 max-w-4xl">
-        <!-- Шапка с анимацией -->
-        <header class="text-center mb-8">
-            <h1 class="text-5xl font-bold mb-4">
-                <span class="bg-gradient-to-r from-yellow-300 to-pink-400 bg-clip-text text-transparent">
-                    🤣 ПРИКОЛЮШНИК 3000
-                </span>
-            </h1>
-            <p class="text-xl text-gray-200">Сайт для дикого троллинга друзей</p>
-            <div class="inline-flex items-center mt-4 bg-black/30 rounded-full px-6 py-2">
-                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse mr-2"></div>
-                <span id="onlineCount">0</span> друзей онлайн
+<body class="text-gray-100">
+    <!-- Confetti container -->
+    <div id="confettiContainer"></div>
+    
+    <!-- Spam effect -->
+    <div id="spamEffect" class="spam-effect hidden"></div>
+    
+    <!-- Notifications container -->
+    <div id="notifications" class="fixed top-4 right-4 z-50 space-y-2 max-w-sm"></div>
+    
+    <!-- Main container -->
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="glass-effect border-b border-white/10 py-4 px-6">
+            <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center mb-4 md:mb-0">
+                    <div class="relative">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center float-animation">
+                            <i class="fas fa-comments text-2xl"></i>
+                        </div>
+                        <div id="onlineBadge" class="notification-badge hidden">0</div>
+                    </div>
+                    <div class="ml-4">
+                        <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                            EPIC MESSENGER
+                        </h1>
+                        <div class="flex items-center text-sm text-gray-400">
+                            <span id="onlineIndicator" class="online-indicator"></span>
+                            <span id="onlineCount">Загрузка...</span> онлайн
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Theme switcher -->
+                    <div class="flex items-center space-x-2">
+                        <div class="theme-dot bg-gradient-to-br from-gray-900 to-gray-700 active" data-theme="dark"></div>
+                        <div class="theme-dot bg-gradient-to-br from-blue-50 to-gray-100" data-theme="light"></div>
+                        <div class="theme-dot bg-gradient-to-br from-purple-900 to-pink-900" data-theme="purple"></div>
+                    </div>
+                    
+                    <!-- User menu -->
+                    <div class="relative">
+                        <button id="userMenuBtn" class="flex items-center space-x-2 px-4 py-2 rounded-xl glass-effect hover-lift">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <span id="userNameDisplay">Гость</span>
+                            <i class="fas fa-chevron-down text-sm"></i>
+                        </button>
+                        <div id="userMenu" class="absolute right-0 mt-2 w-48 rounded-xl glass-effect border border-white/10 shadow-xl hidden z-10">
+                            <div class="p-4">
+                                <input type="text" id="userNameInput" class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 mb-3" placeholder="Введите имя">
+                                <button id="saveNameBtn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg py-2 hover-lift">
+                                    Сохранить
+                                </button>
+                                <hr class="my-3 border-white/10">
+                                <button id="clearChatBtn" class="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5">
+                                    <i class="fas fa-trash mr-2"></i> Очистить чат
+                                </button>
+                                <button id="exportChatBtn" class="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5">
+                                    <i class="fas fa-download mr-2"></i> Экспорт чата
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </header>
 
-        <!-- Секретная панель -->
-        <div class="bg-black/40 backdrop-blur-lg rounded-2xl p-6 mb-6 border-2 border-yellow-500/50">
-            <h2 class="text-2xl font-bold mb-4 text-yellow-300">
-                <i class="fas fa-bomb mr-3"></i>СЕКРЕТНОЕ ОРУЖИЕ
-            </h2>
-            <p class="mb-4 text-gray-300">Введи код <span class="bg-black px-2 py-1 rounded">7734</span> и спамни картинкой всем!</p>
-            <div class="flex gap-4">
-                <input type="password" id="secretCode" 
-                       class="flex-grow bg-black/50 border-2 border-yellow-500/50 rounded-xl px-4 py-3 text-lg"
-                       placeholder="Введи 7734...">
-                <button onclick="activateSpam()" 
-                        class="bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 px-8 py-3 rounded-xl font-bold text-lg transition-all transform hover:scale-105 active:scale-95">
-                    <i class="fas fa-rocket mr-2"></i>СПАМИТЬ!
-                </button>
+        <!-- Secret admin panel -->
+        <div id="adminPanel" class="glass-effect border-y border-yellow-500/30 bg-yellow-900/10 py-3 px-6 hidden">
+            <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center mb-2 md:mb-0">
+                    <i class="fas fa-crown admin-crown mr-2"></i>
+                    <span class="font-bold">АДМИН ПАНЕЛЬ АКТИВИРОВАНА</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <input type="text" id="adminCommand" class="bg-black/50 border border-yellow-500/50 rounded-lg px-3 py-1 text-sm" placeholder="Введите команду...">
+                    <button onclick="executeAdminCommand()" class="bg-gradient-to-r from-yellow-600 to-orange-600 rounded-lg px-3 py-1 text-sm hover-lift">
+                        Выполнить
+                    </button>
+                    <button onclick="activateSpamMode()" class="bg-gradient-to-r from-red-600 to-pink-600 rounded-lg px-3 py-1 text-sm hover-lift">
+                        СПАМ 7734
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Чат -->
-        <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-6 mb-6 border border-white/20">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">
-                    <i class="fas fa-comments mr-3 text-blue-400"></i>ЧАТ ДЛЯ ТРОЛЛИНГА
-                </h2>
-                <button onclick="sendJoke()" class="joke-btn bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 px-6 py-3 rounded-xl font-bold transition-all">
-                    <i class="fas fa-gift mr-2"></i>КИНУТЬ ПРИКОЛ
-                </button>
-            </div>
+        <!-- Main content -->
+        <div class="flex-1 container mx-auto px-4 py-6 flex flex-col lg:flex-row gap-6">
+            <!-- Left sidebar -->
+            <div class="lg:w-1/4 space-y-6">
+                <!-- Online users -->
+                <div class="glass-effect rounded-2xl p-5 hover-lift">
+                    <h2 class="text-lg font-bold mb-4 flex items-center">
+                        <i class="fas fa-users mr-2 text-green-400"></i>
+                        Друзья онлайн
+                        <span id="friendsCount" class="ml-2 bg-white/10 px-2 py-1 rounded-lg text-sm">0</span>
+                    </h2>
+                    <div id="usersList" class="space-y-3 max-h-80 overflow-y-auto">
+                        <!-- Users will be loaded here -->
+                        <div class="flex items-center p-3 rounded-lg bg-white/5">
+                            <div class="skeleton w-8 h-8 rounded-full mr-3"></div>
+                            <div class="flex-1">
+                                <div class="skeleton h-4 w-24 mb-2"></div>
+                                <div class="skeleton h-3 w-16"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <!-- Сообщения -->
-            <div id="messages" class="space-y-4 mb-6 max-h-96 overflow-y-auto p-4 bg-black/20 rounded-xl">
-                <!-- Сообщения появятся здесь -->
-                <div class="text-center text-gray-400 py-8">
-                    <i class="fas fa-comment-slash text-4xl mb-4"></i>
-                    <p>Первое сообщение будет эпичным!</p>
+                <!-- Quick actions -->
+                <div class="glass-effect rounded-2xl p-5 hover-lift">
+                    <h2 class="text-lg font-bold mb-4">
+                        <i class="fas fa-bolt mr-2 text-yellow-400"></i> Быстрые действия
+                    </h2>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="sendQuickMessage('😂 Привет всем!')" class="bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl p-3 hover-lift">
+                            <i class="fas fa-hand-wave mb-1"></i>
+                            <div class="text-sm">Привет</div>
+                        </button>
+                        <button onclick="sendQuickMessage('🔥 Огонь!')" class="bg-gradient-to-br from-red-600 to-orange-600 rounded-xl p-3 hover-lift">
+                            <i class="fas fa-fire mb-1"></i>
+                            <div class="text-sm">Огонь</div>
+                        </button>
+                        <button onclick="sendRandomGIF()" class="bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl p-3 hover-lift">
+                            <i class="fas fa-image mb-1"></i>
+                            <div class="text-sm">Гифка</div>
+                        </button>
+                        <button onclick="sendVoiceMessage()" class="bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl p-3 hover-lift">
+                            <i class="fas fa-microphone mb-1"></i>
+                            <div class="text-sm">Голос</div>
+                        </button>
+                    </div>
+                    
+                    <!-- Secret code input -->
+                    <div class="mt-6">
+                        <div class="text-sm text-gray-400 mb-2">Секретный код админа:</div>
+                        <div class="flex space-x-2">
+                            <input type="password" id="secretCodeInput" 
+                                   class="flex-1 bg-black/50 border border-white/20 rounded-lg px-3 py-2 text-center font-mono"
+                                   placeholder="7734" maxlength="4">
+                            <button onclick="checkSecretCode()" class="bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg px-4 hover-lift">
+                                <i class="fas fa-key"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Meme gallery -->
+                <div class="glass-effect rounded-2xl p-5 hover-lift">
+                    <h2 class="text-lg font-bold mb-4">
+                        <i class="fas fa-gem mr-2 text-pink-400"></i> Галерея мемов
+                    </h2>
+                    <div class="grid grid-cols-3 gap-2">
+                        <img src="https://i.imgur.com/DgqQ0hK.jpeg" class="w-full h-20 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="sendImage(this.src)">
+                        <img src="https://i.imgur.com/8v9gU1L.jpeg" class="w-full h-20 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="sendImage(this.src)">
+                        <img src="https://i.imgur.com/9E8g3vZ.jpeg" class="w-full h-20 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="sendImage(this.src)">
+                        <img src="https://i.imgur.com/7Q9gT2L.jpeg" class="w-full h-20 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="sendImage(this.src)">
+                        <img src="https://i.imgur.com/m8QjwVp.jpeg" class="w-full h-20 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="sendImage(this.src)">
+                        <img src="https://i.imgur.com/2g9F1hT.jpeg" class="w-full h-20 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="sendImage(this.src)">
+                    </div>
+                    <button onclick="showMemeGallery()" class="w-full mt-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
+                        <i class="fas fa-expand mr-2"></i> Еще мемы
+                    </button>
                 </div>
             </div>
 
-            <!-- Отправка сообщений -->
-            <div class="flex gap-4">
-                <input type="text" id="username" 
-                       class="w-1/4 bg-black/50 border border-white/30 rounded-xl px-4 py-3"
-                       placeholder="Твое имя" value="Анонимный тролль">
-                <input type="text" id="messageInput" 
-                       class="flex-grow bg-black/50 border border-white/30 rounded-xl px-4 py-3"
-                       placeholder="Напиши что-нибудь смешное..." 
-                       onkeypress="if(event.key=='Enter') sendMessage()">
-                <button onclick="sendMessage()" 
-                        class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-8 py-3 rounded-xl font-bold transition-all transform hover:scale-105">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-            </div>
+            <!-- Chat area -->
+            <div class="lg:w-3/4 flex flex-col">
+                <!-- Messages container -->
+                <div id="messagesContainer" class="flex-1 glass-effect rounded-2xl p-4 md:p-6 mb-6 overflow-y-auto">
+                    <div id="messages" class="space-y-4">
+                        <!-- Welcome message -->
+                        <div class="text-center py-10 animate__animated animate__fadeIn">
+                            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-comments text-3xl"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold mb-2">Добро пожаловать!</h2>
+                            <p class="text-gray-400">Начните общение с друзьями</p>
+                            <p class="text-sm text-gray-500 mt-4">Для админ-прав введите код: <span class="font-mono bg-black/50 px-2 py-1 rounded">7734</span></p>
+                        </div>
+                    </div>
+                </div>
 
-            <!-- Быстрые приколы -->
-            <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-                <button onclick="quickMessage('😂 Офигенная тема!')" class="bg-blue-600/50 hover:bg-blue-700/50 p-3 rounded-lg transition-colors">
-                    😂 Офигенная тема!
-                </button>
-                <button onclick="quickMessage('🔥 Это вообще законно?')" class="bg-red-600/50 hover:bg-red-700/50 p-3 rounded-lg transition-colors">
-                    🔥 Это вообще законно?
-                </button>
-                <button onclick="quickMessage('🎮 Кто играет?')" class="bg-green-600/50 hover:bg-green-700/50 p-3 rounded-lg transition-colors">
-                    🎮 Кто играет?
-                </button>
-                <button onclick="sendRandomImage()" class="bg-yellow-600/50 hover:bg-yellow-700/50 p-3 rounded-lg transition-colors">
-                    📸 Случайная картинка
-                </button>
+                <!-- Typing indicator -->
+                <div id="typingIndicator" class="hidden mb-4">
+                    <div class="flex items-center space-x-2 glass-effect rounded-full px-4 py-2 w-fit">
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <span class="text-sm text-gray-400" id="typingUsers"></span>
+                    </div>
+                </div>
+
+                <!-- Input area -->
+                <div class="glass-effect rounded-2xl p-4 md:p-6">
+                    <!-- Emoji picker -->
+                    <div id="emojiPicker" class="mb-4 p-4 rounded-xl bg-black/50 hidden">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-sm font-medium">Эмодзи</span>
+                            <button onclick="hideEmojiPicker()" class="text-gray-400 hover:text-white">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="emoji-grid" id="emojiGrid">
+                            <!-- Emojis will be added by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- File preview -->
+                    <div id="filePreview" class="mb-4 hidden">
+                        <div class="flex items-center justify-between bg-white/10 rounded-xl p-3">
+                            <div class="flex items-center">
+                                <i class="fas fa-file text-xl mr-3 text-blue-400"></i>
+                                <div>
+                                    <div id="fileName" class="font-medium"></div>
+                                    <div id="fileSize" class="text-sm text-gray-400"></div>
+                                    <div class="upload-progress">
+                                        <div id="uploadProgressBar" class="upload-progress-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="cancelUpload()" class="text-red-400 hover:text-red-300">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Input controls -->
+                    <div class="flex items-end space-x-3">
+                        <!-- Attachment button -->
+                        <div class="relative">
+                            <button id="attachBtn" class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <div id="attachMenu" class="absolute bottom-full mb-2 left-0 w-48 rounded-xl glass-effect border border-white/10 p-2 hidden">
+                                <input type="file" id="fileUpload" class="hidden" accept="image/*,video/*,.pdf,.doc,.docx,.txt">
+                                <input type="file" id="imageUpload" class="hidden" accept="image/*">
+                                <button onclick="$('#imageUpload').click()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5">
+                                    <i class="fas fa-image mr-2"></i> Картинка
+                                </button>
+                                <button onclick="$('#fileUpload').click()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5">
+                                    <i class="fas fa-file mr-2"></i> Файл
+                                </button>
+                                <button onclick="startVoiceRecording()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5">
+                                    <i class="fas fa-microphone mr-2"></i> Голосовое
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Main input -->
+                        <div class="flex-1">
+                            <div class="relative">
+                                <textarea id="messageInput" 
+                                          rows="2"
+                                          class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 pr-12 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                          placeholder="Напишите сообщение..."></textarea>
+                                <button onclick="toggleEmojiPicker()" class="absolute right-3 bottom-3 text-gray-400 hover:text-white">
+                                    <i class="far fa-smile"></i>
+                                </button>
+                            </div>
+                            <div class="flex justify-between items-center mt-2">
+                                <div class="text-sm text-gray-400">
+                                    Enter - отправить, Shift+Enter - новая строка
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button onclick="sendMessage()" id="sendBtn" 
+                                            class="px-6 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 font-medium hover-lift transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i class="fas fa-paper-plane mr-2"></i> Отправить
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Галерея мемов -->
-        <div class="bg-black/30 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-            <h2 class="text-2xl font-bold mb-4">
-                <i class="fas fa-images mr-3 text-green-400"></i>ГАЛЕРЕЯ ПРИКОЛОВ
-            </h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <img src="https://i.imgur.com/DgqQ0hK.jpeg" class="w-full h-32 object-cover rounded-xl cursor-pointer hover:scale-105 transition-transform" onclick="sendImage(this.src)">
-                <img src="https://i.imgur.com/8v9gU1L.jpeg" class="w-full h-32 object-cover rounded-xl cursor-pointer hover:scale-105 transition-transform" onclick="sendImage(this.src)">
-                <img src="https://i.imgur.com/9E8g3vZ.jpeg" class="w-full h-32 object-cover rounded-xl cursor-pointer hover:scale-105 transition-transform" onclick="sendImage(this.src)">
-                <img src="https://i.imgur.com/7Q9gT2L.jpeg" class="w-full h-32 object-cover rounded-xl cursor-pointer hover:scale-105 transition-transform" onclick="sendImage(this.src)">
+        <!-- Footer -->
+        <footer class="glass-effect border-t border-white/10 py-4 px-6 mt-6">
+            <div class="container mx-auto text-center text-gray-400 text-sm">
+                <p>EPIC MESSENGER v2.0 • Сообщения в реальном времени • <span id="messageCount">0</span> сообщений • <span id="siteUrl">Загрузка...</span></p>
+                <p class="mt-1">Используйте код <span class="font-mono">7734</span> для админ-прав и спама картинкой</p>
             </div>
-        </div>
-
-        <!-- Статус -->
-        <footer class="mt-8 text-center text-gray-300">
-            <p>Сайт работает на магии и кофе ☕ • Сообщения сохраняются 24 часа</p>
-            <p class="text-sm mt-2">Кидай ссылку друзьям: <span id="siteUrl" class="bg-black/50 px-3 py-1 rounded">Загрузка...</span></p>
         </footer>
     </div>
 
-    <!-- Модалка спама -->
-    <div id="spamModal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
-        <div class="bg-gradient-to-br from-red-900 to-orange-900 rounded-2xl p-8 max-w-md text-center border-4 border-yellow-500">
-            <h2 class="text-3xl font-bold mb-4 text-yellow-300">🚀 СПАМ АКТИВИРОВАН!</h2>
-            <div class="text-6xl mb-6">🤯</div>
-            <p class="text-xl mb-6">Всем участникам чата сейчас прилетит эпичная картинка!</p>
-            <button onclick="closeSpamModal()" class="bg-black/50 hover:bg-black/70 px-8 py-3 rounded-xl text-lg">
-                ПРОДОЛЖИТЬ ТРОЛЛИНГ
-            </button>
+    <!-- Meme Gallery Modal -->
+    <div id="memeModal" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4">
+        <div class="bg-gradient-to-br from-gray-900 to-purple-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div class="flex justify-between items-center p-6 border-b border-white/10">
+                <h2 class="text-2xl font-bold">Галерея мемов</h2>
+                <button onclick="closeMemeGallery()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="memeGallery">
+                    <!-- Memes will be loaded here -->
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js"></script>
-    
+    <!-- Voice recording modal -->
+    <div id="voiceModal" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center">
+        <div class="bg-gradient-to-br from-gray-900 to-blue-900 rounded-2xl p-8 max-w-md text-center">
+            <div class="text-4xl mb-6">
+                <i class="fas fa-microphone"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-4">Запись голосового</h2>
+            <div id="voiceWave" class="voice-wave justify-center mb-6">
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+            </div>
+            <div class="text-lg mb-6" id="recordTime">00:00</div>
+            <div class="flex justify-center space-x-4">
+                <button onclick="stopVoiceRecording()" class="px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700">
+                    <i class="fas fa-stop mr-2"></i> Стоп
+                </button>
+                <button onclick="cancelVoiceRecording()" class="px-6 py-3 rounded-xl bg-gray-600 hover:bg-gray-700">
+                    Отмена
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase configuration -->
     <script>
-        // Конфигурация Firebase (БЕСПЛАТНО!)
+        // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyC7zBrXvPEHfRcqtVHJfEYJ0V0ywGIHBME",
-            authDomain: "fun-messenger-28b3d.firebaseapp.com",
-            databaseURL: "https://fun-messenger-28b3d-default-rtdb.firebaseio.com",
-            projectId: "fun-messenger-28b3d",
-            storageBucket: "fun-messenger-28b3d.appspot.com",
-            messagingSenderId: "568950856309",
-            appId: "1:568950856309:web:3c6d4c37b5c53ddb7be8b9"
+            apiKey: "AIzaSyAwbE6M2HzPR41o7aYWCOqajy81gb8VRAQ",
+            authDomain: "epic-messenger-demo.firebaseapp.com",
+            databaseURL: "https://epic-messenger-demo-default-rtdb.firebaseio.com",
+            projectId: "epic-messenger-demo",
+            storageBucket: "epic-messenger-demo.appspot.com",
+            messagingSenderId: "1065072781684",
+            appId: "1:1065072781684:web:90c34feab28c66b9db25e3"
         };
 
-        // Инициализация Firebase
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        const database = firebase.database();
+    </script>
 
-        // Переменные
-        let userId = Math.random().toString(36).substring(7);
-        let isAdmin = false;
+    <!-- Main JavaScript -->
+    <script>
+        // ============= ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =============
+        let currentUser = {
+            id: Math.random().toString(36).substring(2) + Date.now().toString(36),
+            name: localStorage.getItem('userName') || `Гость_${Math.floor(Math.random() * 1000)}`,
+            color: localStorage.getItem('userColor') || getRandomColor(),
+            isAdmin: localStorage.getItem('isAdmin') === 'true',
+            isOnline: true,
+            lastActive: Date.now()
+        };
+
+        let isTyping = false;
+        let typingTimeout = null;
+        let isRecording = false;
+        let recordStartTime = null;
+        let recordTimer = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let currentUpload = null;
+        let messageCount = 0;
         let onlineUsers = {};
+        let typingUsers = {};
 
-        // Показываем ссылку на сайт
-        document.getElementById('siteUrl').textContent = window.location.href;
-
-        // Слушаем сообщения
-        db.ref('messages').limitToLast(20).on('value', (snapshot) => {
-            const messagesDiv = document.getElementById('messages');
-            messagesDiv.innerHTML = '';
+        // ============= ИНИЦИАЛИЗАЦИЯ =============
+        document.addEventListener('DOMContentLoaded', function() {
+            // Установка имени пользователя
+            document.getElementById('userNameDisplay').textContent = currentUser.name;
+            document.getElementById('userNameInput').value = currentUser.name;
             
-            const messages = snapshot.val() || {};
-            Object.values(messages).forEach(msg => {
-                const div = document.createElement('div');
-                div.className = 'message bg-white/10 p-4 rounded-xl';
-                div.innerHTML = `
-                    <div class="flex justify-between mb-2">
-                        <span class="font-bold ${msg.isSystem ? 'text-yellow-300' : 'text-blue-300'}">
-                            ${msg.username} ${msg.isSystem ? '⚡' : ''}
-                        </span>
-                        <span class="text-gray-400 text-sm">${msg.time || ''}</span>
-                    </div>
-                    ${msg.text ? `<p class="mb-2">${msg.text}</p>` : ''}
-                    ${msg.image ? `<img src="${msg.image}" class="max-w-full rounded-lg mt-2">` : ''}
-                `;
-                messagesDiv.appendChild(div);
+            // Показать URL сайта
+            document.getElementById('siteUrl').textContent = window.location.href;
+            
+            // Инициализация
+            initializeFirebase();
+            setupEventListeners();
+            setUserOnline();
+            loadEmojis();
+            loadMemeGallery();
+            
+            // Обновление онлайна каждые 30 секунд
+            setInterval(updateUserOnline, 30000);
+            setInterval(cleanInactiveUsers, 60000);
+            
+            // Показать приветственное уведомление
+            showNotification('Добро пожаловать в EPIC MESSENGER!', 'info');
+            
+            // Если админ - показать панель
+            if (currentUser.isAdmin) {
+                showAdminPanel();
+            }
+        });
+
+        // ============= FIREBASE ИНИЦИАЛИЗАЦИЯ =============
+        function initializeFirebase() {
+            // Ссылки на данные
+            const messagesRef = database.ref('messages');
+            const usersRef = database.ref('users');
+            const typingRef = database.ref('typing');
+            
+            // Слушатель сообщений
+            messagesRef.limitToLast(100).on('value', (snapshot) => {
+                const messages = snapshot.val() || {};
+                displayMessages(messages);
+                messageCount = Object.keys(messages).length;
+                document.getElementById('messageCount').textContent = messageCount;
             });
             
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        });
+            // Слушатель пользователей
+            usersRef.on('value', (snapshot) => {
+                const users = snapshot.val() || {};
+                onlineUsers = users;
+                updateOnlineUsers(users);
+            });
+            
+            // Слушатель набора текста
+            typingRef.on('value', (snapshot) => {
+                const typing = snapshot.val() || {};
+                typingUsers = typing;
+                updateTypingIndicator(typing);
+            });
+        }
 
-        // Слушаем онлайн пользователей
-        db.ref('online').on('value', (snapshot) => {
-            const users = snapshot.val() || {};
-            onlineUsers = users;
-            document.getElementById('onlineCount').textContent = Object.keys(users).length;
-        });
+        // ============= ОТОБРАЖЕНИЕ СООБЩЕНИЙ =============
+        function displayMessages(messages) {
+            const container = document.getElementById('messages');
+            const messageArray = Object.entries(messages).sort((a, b) => a[1].timestamp - b[1].timestamp);
+            
+            // Очистка только если нет приветственного сообщения
+            if (messageArray.length > 0) {
+                container.innerHTML = '';
+            }
+            
+            messageArray.forEach(([id, msg]) => {
+                const messageElement = createMessageElement(id, msg);
+                container.appendChild(messageElement);
+            });
+            
+            // Прокрутка вниз
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 100);
+        }
 
-        // Отметить себя онлайн
-        db.ref('online/' + userId).set({
-            name: document.getElementById('username').value,
-            timestamp: Date.now()
-        });
+        function createMessageElement(id, msg) {
+            const isSelf = msg.userId === currentUser.id;
+            const isSystem = msg.type === 'system';
+            const isSpam = msg.type === 'spam';
+            
+            const div = document.createElement('div');
+            div.className = `animate__animated animate__fadeInUp ${isSelf ? 'message-self' : 'message-other'} ${isSystem ? 'message-system' : ''} ${isSpam ? 'message-spam' : ''}`;
+            div.style.maxWidth = '70%';
+            
+            let content = `
+                <div class="flex justify-between items-start mb-1">
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 rounded-full mr-2 flex items-center justify-center text-xs font-bold" 
+                             style="background: ${msg.userColor || '#6366f1'}; color: white;">
+                            ${msg.userName ? msg.userName.charAt(0).toUpperCase() : '?'}
+                        </div>
+                        <span class="font-bold ${isSelf ? 'text-white' : 'text-gray-200'}">
+                            ${msg.userName || 'Аноним'}
+                            ${msg.isAdmin ? '<i class="fas fa-crown admin-crown ml-1"></i>' : ''}
+                        </span>
+                    </div>
+                    <span class="text-xs opacity-70">${formatTime(msg.timestamp)}</span>
+                </div>
+            `;
+            
+            if (msg.text) {
+                content += `<div class="mb-2 whitespace-pre-wrap">${formatMessageText(msg.text)}</div>`;
+            }
+            
+            if (msg.image) {
+                content += `
+                    <div class="mb-2">
+                        <img src="${msg.image}" 
+                             alt="Изображение" 
+                             class="max-w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                             onclick="openImageModal('${msg.image}')">
+                    </div>
+                `;
+            }
+            
+            if (msg.file) {
+                content += `
+                    <div class="file-item mb-2">
+                        <div class="file-icon">
+                            <i class="fas fa-file"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium truncate">${msg.file.name}</div>
+                            <div class="text-xs opacity-70">${formatFileSize(msg.file.size)}</div>
+                        </div>
+                        <a href="${msg.file.url}" download class="text-blue-400 hover:text-blue-300 ml-2">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </div>
+                `;
+            }
+            
+            if (msg.reactions && Object.keys(msg.reactions).length > 0) {
+                content += `<div class="flex flex-wrap gap-1 mt-2">`;
+                Object.entries(msg.reactions).forEach(([emoji, users]) => {
+                    const userCount = Object.keys(users).length;
+                    const isReacted = users[currentUser.id];
+                    content += `
+                        <div class="reaction ${isReacted ? 'bg-white/30' : ''}" 
+                             onclick="toggleReaction('${id}', '${emoji}')">
+                            ${emoji} ${userCount}
+                        </div>
+                    `;
+                });
+                content += `</div>`;
+            }
+            
+            if (!isSystem && !isSpam) {
+                content += `
+                    <div class="flex space-x-2 mt-2">
+                        <button onclick="addReaction('${id}', '👍')" class="text-xs opacity-50 hover:opacity-100">👍</button>
+                        <button onclick="addReaction('${id}', '😂')" class="text-xs opacity-50 hover:opacity-100">😂</button>
+                        <button onclick="addReaction('${id}', '❤️')" class="text-xs opacity-50 hover:opacity-100">❤️</button>
+                        <button onclick="addReaction('${id}', '🔥')" class="text-xs opacity-50 hover:opacity-100">🔥</button>
+                        ${isSelf ? `<button onclick="deleteMessage('${id}')" class="text-xs opacity-50 hover:opacity-100 text-red-400"><i class="fas fa-trash"></i></button>` : ''}
+                    </div>
+                `;
+            }
+            
+            div.innerHTML = content;
+            return div;
+        }
 
-        // Отправка сообщения
+        // ============= ОТПРАВКА СООБЩЕНИЙ =============
         function sendMessage() {
-            const username = document.getElementById('username').value || 'Аноним';
-            const text = document.getElementById('messageInput').value;
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
             
-            if (!text.trim()) return;
+            if (!text && !currentUpload) {
+                showNotification('Введите сообщение или прикрепите файл', 'warning');
+                return;
+            }
             
-            // Проверка секретного кода
+            // Проверка на секретный код
             if (text === '7734') {
-                activateSpam();
-                document.getElementById('messageInput').value = '';
+                checkSecretCode();
+                input.value = '';
                 return;
             }
             
             const messageData = {
-                username: username,
+                userId: currentUser.id,
+                userName: currentUser.name,
+                userColor: currentUser.color,
                 text: text,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                userId: userId,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                isAdmin: currentUser.isAdmin,
+                type: 'message'
             };
             
-            db.ref('messages').push(messageData);
-            document.getElementById('messageInput').value = '';
+            // Добавление файла если есть
+            if (currentUpload) {
+                messageData[currentUpload.type] = currentUpload.data;
+                currentUpload = null;
+                hideFilePreview();
+            }
             
-            // Звук отправки
-            playSound('send');
+            // Отправка в Firebase
+            database.ref('messages').push(messageData)
+                .then(() => {
+                    input.value = '';
+                    stopTyping();
+                    showNotification('Сообщение отправлено!', 'success');
+                    
+                    // Воспроизведение звука отправки
+                    playSound('send');
+                })
+                .catch((error) => {
+                    console.error('Ошибка отправки:', error);
+                    showNotification('Ошибка отправки сообщения', 'error');
+                });
         }
 
-        // Быстрое сообщение
-        function quickMessage(text) {
+        // ============= БЫСТРЫЕ СООБЩЕНИЯ =============
+        function sendQuickMessage(text) {
             document.getElementById('messageInput').value = text;
             sendMessage();
         }
 
-        // Отправить картинку
-        function sendImage(url) {
-            const username = document.getElementById('username').value || 'Аноним';
-            db.ref('messages').push({
-                username: username,
-                image: url,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                timestamp: Date.now()
-            });
-            playSound('image');
+        function sendRandomGIF() {
+            const gifs = [
+                'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif',
+                'https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif',
+                'https://media.giphy.com/media/l0HU7JIWcm8cArkIw/giphy.gif',
+                'https://media.giphy.com/media/3o7abAHdYvZdBNnGZq/giphy.gif',
+                'https://media.giphy.com/media/l1J9wJ6ZSONN8Xbgk/giphy.gif'
+            ];
+            
+            const randomGif = gifs[Math.floor(Math.random() * gifs.length)];
+            sendImage(randomGif);
         }
 
-        // Случайная картинка
-        function sendRandomImage() {
+        // ============= ОТПРАВКА КАРТИНОК =============
+        function sendImage(url) {
+            const messageData = {
+                userId: currentUser.id,
+                userName: currentUser.name,
+                userColor: currentUser.color,
+                image: url,
+                timestamp: Date.now(),
+                isAdmin: currentUser.isAdmin,
+                type: 'message'
+            };
+            
+            database.ref('messages').push(messageData)
+                .then(() => {
+                    showNotification('Картинка отправлена!', 'success');
+                    playSound('image');
+                });
+        }
+
+        // ============= СЕКРЕТНЫЙ КОД 7734 =============
+        function checkSecretCode() {
+            const code = document.getElementById('secretCodeInput').value;
+            
+            if (code === '7734') {
+                // Активация админ-прав
+                currentUser.isAdmin = true;
+                localStorage.setItem('isAdmin', 'true');
+                
+                // Показать админ-панель
+                showAdminPanel();
+                
+                // Отправить системное сообщение
+                sendSystemMessage(`${currentUser.name} получил админ-права!`);
+                
+                // Спам картинкой
+                activateSpamMode();
+                
+                // Очистить поле
+                document.getElementById('secretCodeInput').value = '';
+                
+                // Уведомление
+                showNotification('Админ-права активированы! СПАМ ЗАПУЩЕН!', 'warning');
+                playSound('spam');
+                
+                // Создать конфетти
+                createConfetti(100);
+            } else {
+                showNotification('Неверный код! Попробуйте 7734', 'error');
+                document.getElementById('secretCodeInput').classList.add('shake-animation');
+                setTimeout(() => {
+                    document.getElementById('secretCodeInput').classList.remove('shake-animation');
+                }, 500);
+            }
+        }
+
+        function activateSpamMode() {
+            // Показать эффект спама
+            const spamEffect = document.getElementById('spamEffect');
+            spamEffect.classList.remove('hidden');
+            setTimeout(() => spamEffect.classList.add('hidden'), 1000);
+            
+            // Отправить спам-сообщение
+            const spamMessage = {
+                userId: 'system',
+                userName: '⚡ СИСТЕМА ⚡',
+                text: 'ВНИМАНИЕ! АКТИВИРОВАН СЕКРЕТНЫЙ КОД 7734!',
+                image: 'https://i.imgur.com/okak.png', // Замените на свою картинку
+                timestamp: Date.now(),
+                type: 'spam'
+            };
+            
+            // Отправить несколько раз для эффекта спама
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    database.ref('messages').push(spamMessage);
+                }, i * 300);
+            }
+            
+            // Воспроизвести звук спама
+            playSound('spam');
+        }
+
+        // ============= АДМИН ПАНЕЛЬ =============
+        function showAdminPanel() {
+            document.getElementById('adminPanel').classList.remove('hidden');
+            document.getElementById('userNameDisplay').innerHTML += ' <i class="fas fa-crown admin-crown"></i>';
+        }
+
+        function executeAdminCommand() {
+            const command = document.getElementById('adminCommand').value.trim();
+            if (!command) return;
+            
+            switch(command.toLowerCase()) {
+                case 'clear':
+                    clearAllMessages();
+                    break;
+                case 'spam':
+                    activateSpamMode();
+                    break;
+                case 'users':
+                    showNotification(`Онлайн пользователей: ${Object.keys(onlineUsers).length}`, 'info');
+                    break;
+                case 'help':
+                    showNotification('Доступные команды: clear, spam, users, system [текст]', 'info');
+                    break;
+                default:
+                    if (command.startsWith('system ')) {
+                        const text = command.substring(7);
+                        sendSystemMessage(text);
+                    } else {
+                        showNotification('Неизвестная команда', 'error');
+                    }
+            }
+            
+            document.getElementById('adminCommand').value = '';
+        }
+
+        // ============= СИСТЕМНЫЕ СООБЩЕНИЯ =============
+        function sendSystemMessage(text) {
+            const messageData = {
+                userId: 'system',
+                userName: '⚡ СИСТЕМА ⚡',
+                text: text,
+                timestamp: Date.now(),
+                type: 'system'
+            };
+            
+            database.ref('messages').push(messageData);
+        }
+
+        // ============= ОЧИСТКА ЧАТА =============
+        function clearAllMessages() {
+            if (confirm('Вы уверены, что хотите удалить ВСЕ сообщения? Это действие необратимо.')) {
+                database.ref('messages').remove()
+                    .then(() => {
+                        showNotification('Все сообщения удалены!', 'success');
+                    })
+                    .catch((error) => {
+                        showNotification('Ошибка удаления сообщений', 'error');
+                    });
+            }
+        }
+
+        // ============= РЕАКЦИИ НА СООБЩЕНИЯ =============
+        function addReaction(messageId, emoji) {
+            const reactionRef = database.ref(`messages/${messageId}/reactions/${emoji}/${currentUser.id}`);
+            reactionRef.set(true);
+        }
+
+        function toggleReaction(messageId, emoji) {
+            const reactionRef = database.ref(`messages/${messageId}/reactions/${emoji}/${currentUser.id}`);
+            reactionRef.transaction((current) => {
+                return current ? null : true;
+            });
+        }
+
+        // ============= УДАЛЕНИЕ СООБЩЕНИЙ =============
+        function deleteMessage(messageId) {
+            if (confirm('Удалить это сообщение?')) {
+                database.ref(`messages/${messageId}`).remove()
+                    .then(() => {
+                        showNotification('Сообщение удалено', 'success');
+                    });
+            }
+        }
+
+        // ============= ПОЛЬЗОВАТЕЛИ И ОНЛАЙН =============
+        function setUserOnline() {
+            const userRef = database.ref(`users/${currentUser.id}`);
+            userRef.set({
+                name: currentUser.name,
+                color: currentUser.color,
+                isAdmin: currentUser.isAdmin,
+                lastActive: Date.now(),
+                isOnline: true
+            });
+            
+            userRef.onDisconnect().update({
+                isOnline: false,
+                lastActive: Date.now()
+            });
+        }
+
+        function updateUserOnline() {
+            const userRef = database.ref(`users/${currentUser.id}`);
+            userRef.update({
+                lastActive: Date.now(),
+                isOnline: true
+            });
+        }
+
+        function updateOnlineUsers(users) {
+            const container = document.getElementById('usersList');
+            const onlineArray = Object.entries(users).filter(([id, user]) => user.isOnline);
+            
+            document.getElementById('friendsCount').textContent = onlineArray.length;
+            document.getElementById('onlineCount').textContent = onlineArray.length;
+            
+            // Обновление бейджа
+            const badge = document.getElementById('onlineBadge');
+            if (onlineArray.length > 0) {
+                badge.classList.remove('hidden');
+                badge.textContent = onlineArray.length;
+            } else {
+                badge.classList.add('hidden');
+            }
+            
+            // Отображение списка пользователей
+            container.innerHTML = '';
+            onlineArray.forEach(([id, user]) => {
+                const userElement = document.createElement('div');
+                userElement.className = 'flex items-center p-3 rounded-lg hover:bg-white/5 transition-colors';
+                userElement.innerHTML = `
+                    <div class="relative">
+                        <div class="w-8 h-8 rounded-full mr-3 flex items-center justify-center text-xs font-bold" 
+                             style="background: ${user.color || '#6366f1'}; color: white;">
+                            ${user.name ? user.name.charAt(0).toUpperCase() : '?'}
+                        </div>
+                        <div class="online-indicator absolute -top-1 -right-1"></div>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-medium flex items-center">
+                            ${user.name}
+                            ${user.isAdmin ? '<i class="fas fa-crown admin-crown ml-1 text-xs"></i>' : ''}
+                        </div>
+                        <div class="text-xs text-gray-400">
+                            ${id === currentUser.id ? 'Вы' : 'онлайн'}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(userElement);
+            });
+        }
+
+        function cleanInactiveUsers() {
+            const now = Date.now();
+            Object.entries(onlineUsers).forEach(([id, user]) => {
+                if (now - user.lastActive > 120000) { // 2 минуты
+                    database.ref(`users/${id}`).remove();
+                }
+            });
+        }
+
+        // ============= ИНДИКАТОР НАБОРА ТЕКСТА =============
+        function startTyping() {
+            if (!isTyping) {
+                isTyping = true;
+                database.ref(`typing/${currentUser.id}`).set({
+                    name: currentUser.name,
+                    timestamp: Date.now()
+                });
+            }
+            
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(stopTyping, 3000);
+        }
+
+        function stopTyping() {
+            if (isTyping) {
+                isTyping = false;
+                database.ref(`typing/${currentUser.id}`).remove();
+            }
+        }
+
+        function updateTypingIndicator(typing) {
+            const container = document.getElementById('typingIndicator');
+            const usersText = document.getElementById('typingUsers');
+            
+            const activeTyping = Object.entries(typing)
+                .filter(([id, data]) => id !== currentUser.id && Date.now() - data.timestamp < 3000)
+                .map(([id, data]) => data.name);
+            
+            if (activeTyping.length > 0) {
+                container.classList.remove('hidden');
+                usersText.textContent = `${activeTyping.join(', ')} ${activeTyping.length === 1 ? 'печатает' : 'печатают'}...`;
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        // ============= ЗАГРУЗКА ФАЙЛОВ =============
+        function setupFileUpload() {
+            const imageUpload = document.getElementById('imageUpload');
+            const fileUpload = document.getElementById('fileUpload');
+            
+            imageUpload.addEventListener('change', handleImageUpload);
+            fileUpload.addEventListener('change', handleFileUpload);
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                showNotification('Пожалуйста, выберите файл изображения', 'error');
+                return;
+            }
+            
+            if (file.size > 10 * 1024 * 1024) {
+                showNotification('Файл слишком большой (максимум 10MB)', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentUpload = {
+                    type: 'image',
+                    data: e.target.result
+                };
+                
+                showFilePreview(file.name, formatFileSize(file.size));
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (file.size > 20 * 1024 * 1024) {
+                showNotification('Файл слишком большой (максимум 20MB)', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentUpload = {
+                    type: 'file',
+                    data: {
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                        url: e.target.result
+                    }
+                };
+                
+                showFilePreview(file.name, formatFileSize(file.size));
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showFilePreview(name, size) {
+            document.getElementById('fileName').textContent = name;
+            document.getElementById('fileSize').textContent = size;
+            document.getElementById('filePreview').classList.remove('hidden');
+            
+            // Анимация прогресса
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                document.getElementById('uploadProgressBar').style.width = progress + '%';
+                if (progress >= 100) {
+                    clearInterval(interval);
+                }
+            }, 50);
+        }
+
+        function hideFilePreview() {
+            document.getElementById('filePreview').classList.add('hidden');
+            document.getElementById('uploadProgressBar').style.width = '0%';
+        }
+
+        function cancelUpload() {
+            currentUpload = null;
+            hideFilePreview();
+            document.getElementById('imageUpload').value = '';
+            document.getElementById('fileUpload').value = '';
+        }
+
+        // ============= ГОЛОСОВЫЕ СООБЩЕНИЯ =============
+        function startVoiceRecording() {
+            if (!navigator.mediaDevices || !window.MediaRecorder) {
+                showNotification('Голосовые сообщения не поддерживаются в вашем браузере', 'error');
+                return;
+            }
+            
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+                    
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        
+                        // Отправка голосового сообщения
+                        const messageData = {
+                            userId: currentUser.id,
+                            userName: currentUser.name,
+                            userColor: currentUser.color,
+                            voice: audioUrl,
+                            timestamp: Date.now(),
+                            isAdmin: currentUser.isAdmin,
+                            type: 'voice'
+                        };
+                        
+                        database.ref('messages').push(messageData);
+                        showNotification('Голосовое сообщение отправлено!', 'success');
+                    };
+                    
+                    mediaRecorder.start();
+                    isRecording = true;
+                    recordStartTime = Date.now();
+                    
+                    // Запуск таймера
+                    startRecordTimer();
+                    
+                    // Показать модальное окно
+                    document.getElementById('voiceModal').classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('Ошибка записи:', error);
+                    showNotification('Не удалось получить доступ к микрофону', 'error');
+                });
+        }
+
+        function startRecordTimer() {
+            const timeDisplay = document.getElementById('recordTime');
+            recordTimer = setInterval(() => {
+                const elapsed = Date.now() - recordStartTime;
+                const seconds = Math.floor(elapsed / 1000);
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+                timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function stopVoiceRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                clearInterval(recordTimer);
+                
+                // Остановка всех треков
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                
+                // Закрыть модальное окно
+                document.getElementById('voiceModal').classList.add('hidden');
+            }
+        }
+
+        function cancelVoiceRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                clearInterval(recordTimer);
+                
+                // Остановка всех треков
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                
+                // Закрыть модальное окно
+                document.getElementById('voiceModal').classList.add('hidden');
+                
+                showNotification('Запись отменена', 'info');
+            }
+        }
+
+        // ============= ЭМОДЗИ =============
+        function loadEmojis() {
+            const emojis = ['😀', '😂', '🥰', '😎', '🤔', '😱', '👍', '👎', '❤️', '🔥', '🎉', '💯', '🤣', '😭', '😡', '🤮', '👏', '🙏', '💩', '🤡', '👻', '💀', '🤖', '🎃', '🐶', '🐱', '🐭', '🐰', '🦊', '🐻', '🐼', '🐨', '🦁', '🐯', '🦄', '🐙', '🦑', '🦐', '🐟', '🐠', '🐡', '🦈', '🐳', '🐬', '🐊', '🦒', '🐘', '🦏', '🐪', '🐫', '🦘', '🐃', '🐂', '🐄', '🐎', '🐖', '🐏', '🐑', '🐐', '🦌', '🐕', '🐩', '🐈', '🐓', '🦃', '🕊️', '🐇', '🐁', '🐀', '🐿️', '🦔', '🐾', '🐉', '🐲', '🌵', '🎄', '🌲', '🌳', '🌴', '🌱', '🌿', '☘️', '🍀', '🎍', '🎋', '🍃', '🍂', '🍁', '🍄', '🌾', '💐', '🌷', '🌹', '🥀', '🌺', '🌸', '🌼', '🌻', '🌞', '🌝', '🌛', '🌜', '🌚', '🌕', '🌖', '🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌙', '🌎', '🌍', '🌏', '🪐', '💫', '⭐', '🌟', '✨', '⚡', '☄️', '💥', '🔥', '🌪️', '🌈', '☀️', '🌤️', '⛅', '🌥️', '☁️', '🌨️', '⛈️', '🌩️', '🌧️', '💨', '❄️', '☃️', '⛄', '💧', '💦', '☔', '☂️', '🌊', '🎂', '🍰', '🧁', '🥧', '🍫', '🍬', '🍭', '🍪', '🍩', '🍯', '🍎', '🍏', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🍈', '🍒', '🍑', '🥭', '🍍', '🥥', '🥝', '🍅', '🍆', '🥑', '🥦', '🥬', '🥒', '🌶️', '🌽', '🥕', '🧄', '🧅', '🥔', '🍠', '🥐', '🥯', '🍞', '🥖', '🥨', '🧀', '🥚', '🍳', '🧈', '🥞', '🧇', '🥓', '🥩', '🍗', '🍖', '🦴', '🌭', '🍔', '🍟', '🍕', '🥪', '🥙', '🧆', '🌮', '🌯', '🥗', '🥘', '🥫', '🍝', '🍜', '🍲', '🍛', '🍣', '🍱', '🥟', '🦪', '🍤', '🍙', '🍚', '🍘', '🍥', '🥠', '🥮', '🍢', '🍡', '🍧', '🍨', '🍦', '🥧', '🧁', '🍰', '🎂', '🍮', '🍭', '🍬', '🍫', '🍿', '🍩', '🍪', '🌰', '🥜', '🍯', '🥛', '🍼', '☕', '🍵', '🧃', '🥤', '🍶', '🍺', '🍻', '🥂', '🍷', '🥃', '🍸', '🍹', '🧉', '🍾', '🧊', '🥄', '🍴', '🍽️', '🥣', '🥡', '🥢', '🧂'];
+            
+            const container = document.getElementById('emojiGrid');
+            emojis.forEach(emoji => {
+                const span = document.createElement('span');
+                span.className = 'emoji-item';
+                span.textContent = emoji;
+                span.onclick = () => insertEmoji(emoji);
+                container.appendChild(span);
+            });
+        }
+
+        function insertEmoji(emoji) {
+            const input = document.getElementById('messageInput');
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            input.value = input.value.substring(0, start) + emoji + input.value.substring(end);
+            input.focus();
+            input.selectionStart = input.selectionEnd = start + emoji.length;
+        }
+
+        function toggleEmojiPicker() {
+            const picker = document.getElementById('emojiPicker');
+            if (picker.classList.contains('hidden')) {
+                picker.classList.remove('hidden');
+            } else {
+                picker.classList.add('hidden');
+            }
+        }
+
+        function hideEmojiPicker() {
+            document.getElementById('emojiPicker').classList.add('hidden');
+        }
+
+        // ============= ГАЛЕРЕЯ МЕМОВ =============
+        function loadMemeGallery() {
             const memes = [
                 'https://i.imgur.com/DgqQ0hK.jpeg',
                 'https://i.imgur.com/8v9gU1L.jpeg',
                 'https://i.imgur.com/9E8g3vZ.jpeg',
                 'https://i.imgur.com/7Q9gT2L.jpeg',
                 'https://i.imgur.com/m8QjwVp.jpeg',
-                'https://i.imgur.com/2g9F1hT.jpeg'
+                'https://i.imgur.com/2g9F1hT.jpeg',
+                'https://i.imgur.com/x5gY2Lk.jpeg',
+                'https://i.imgur.com/y9gZ1Lm.jpeg',
+                'https://i.imgur.com/z8gX0Ln.jpeg',
+                'https://i.imgur.com/a1b2c3d.jpeg',
+                'https://i.imgur.com/b2c3d4e.jpeg',
+                'https://i.imgur.com/c3d4e5f.jpeg'
             ];
-            sendImage(memes[Math.floor(Math.random() * memes.length)]);
+            
+            const container = document.getElementById('memeGallery');
+            memes.forEach(meme => {
+                const div = document.createElement('div');
+                div.className = 'cursor-pointer group';
+                div.innerHTML = `
+                    <img src="${meme}" 
+                         class="w-full h-48 object-cover rounded-lg group-hover:scale-105 transition-transform"
+                         onclick="sendImage('${meme}'); closeMemeGallery();">
+                `;
+                container.appendChild(div);
+            });
         }
 
-        // Активация спама (код 7734)
-        function activateSpam() {
-            const code = document.getElementById('secretCode').value;
+        function showMemeGallery() {
+            document.getElementById('memeModal').classList.remove('hidden');
+        }
+
+        function closeMemeGallery() {
+            document.getElementById('memeModal').classList.add('hidden');
+        }
+
+        // ============= УВЕДОМЛЕНИЯ =============
+        function showNotification(text, type = 'info') {
+            const container = document.getElementById('notifications');
+            const id = 'notification-' + Date.now();
             
-            if (code === '7734') {
-                // Показываем крутую анимацию
-                document.getElementById('spamModal').classList.remove('hidden');
-                document.body.classList.add('spam-active');
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warning: 'bg-yellow-500',
+                info: 'bg-blue-500'
+            };
+            
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = `notification ${colors[type]} rounded-lg p-4 text-white shadow-lg`;
+            div.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} mr-3"></i>
+                    <div class="flex-1">${text}</div>
+                    <button onclick="document.getElementById('${id}').remove()" class="ml-3">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(div);
+            
+            // Автоудаление через 5 секунд
+            setTimeout(() => {
+                const element = document.getElementById(id);
+                if (element) element.remove();
+            }, 5000);
+        }
+
+        // ============= КОНФЕТТИ ЭФФЕКТ =============
+        function createConfetti(count = 50) {
+            const container = document.getElementById('confettiContainer');
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.width = Math.random() * 10 + 5 + 'px';
+                confetti.style.height = Math.random() * 10 + 5 + 'px';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
                 
-                // Отправляем спам-сообщение
-                db.ref('messages').push({
-                    username: '⚡ СИСТЕМНЫЙ СПАМ ⚡',
-                    text: 'ВНИМАНИЕ! АКТИВИРОВАН СЕКРЕТНЫЙ КОД 7734!',
-                    image: 'https://i.imgur.com/okak.png', // Замени на свою картинку
-                    isSystem: true,
-                    time: new Date().toLocaleTimeString(),
-                    timestamp: Date.now()
+                container.appendChild(confetti);
+                
+                // Анимация падения
+                const animation = confetti.animate([
+                    { transform: 'translateY(-100vh) rotate(0deg)', opacity: 1 },
+                    { transform: `translateY(100vh) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+                ], {
+                    duration: Math.random() * 3000 + 2000,
+                    easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)'
                 });
                 
-                // Звук спама
-                playSound('spam');
-                
-                // Сбрасываем поле
-                document.getElementById('secretCode').value = '';
-                
-                // Автозакрытие модалки
-                setTimeout(closeSpamModal, 3000);
-            } else {
-                alert('Неверный код! Нужно 7734 😉');
+                animation.onfinish = () => confetti.remove();
             }
         }
 
-        function closeSpamModal() {
-            document.getElementById('spamModal').classList.add('hidden');
-            document.body.classList.remove('spam-active');
-        }
-
-        // Отправить прикол
-        function sendJoke() {
-            const jokes = [
-                "Почему программисты путают Хэллоуин и Рождество? Потому что Oct 31 == Dec 25!",
-                "Колобок повесился...",
-                "Что сказал слон, когда наступил на колобка? - Плохо испекли.",
-                "Типичный диалог программистов: - Привет! Как дела? - 200 OK"
-            ];
-            
-            const username = document.getElementById('username').value || 'Аноним';
-            db.ref('messages').push({
-                username: username,
-                text: jokes[Math.floor(Math.random() * jokes.length)],
-                time: new Date().toLocaleTimeString(),
-                timestamp: Date.now(),
-                isJoke: true
-            });
-            
-            playSound('joke');
-        }
-
-        // Звуковые эффекты
+        // ============= ЗВУКИ =============
         function playSound(type) {
-            if (type === 'spam') {
-                // Воспроизводим звук спама
-                try {
-                    const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-bomb-explosion-2800.mp3');
-                    audio.volume = 0.3;
-                    audio.play();
-                } catch(e) {}
+            try {
+                const audio = new Audio();
+                audio.volume = 0.3;
+                
+                switch(type) {
+                    case 'send':
+                        audio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-message-sent-1322.mp3';
+                        break;
+                    case 'receive':
+                        audio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3';
+                        break;
+                    case 'image':
+                        audio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-camera-shutter-click-1133.mp3';
+                        break;
+                    case 'spam':
+                        audio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-bomb-explosion-2800.mp3';
+                        break;
+                    case 'error':
+                        audio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3';
+                        break;
+                }
+                
+                audio.play().catch(() => {});
+            } catch(e) {
+                // Игнорируем ошибки воспроизведения звука
             }
         }
 
-        // Обновляем онлайн статус при изменении имени
-        document.getElementById('username').addEventListener('change', function() {
-            db.ref('online/' + userId).update({
-                name: this.value
-            });
-        });
+        // ============= УТИЛИТЫ =============
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
 
-        // Уходим при закрытии страницы
-        window.addEventListener('beforeunload', () => {
-            db.ref('online/' + userId).remove();
-        });
+        function formatMessageText(text) {
+            // Преобразование ссылок в кликабельные
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            return text.replace(urlRegex, url => `<a href="${url}" target="_blank" class="text-blue-400 hover:underline">${url}</a>`);
+        }
 
-        // Автоотметка онлайн каждые 30 сек
-        setInterval(() => {
-            db.ref('online/' + userId).update({
-                timestamp: Date.now()
-            });
-        }, 30000);
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
 
-        // Очистка неактивных пользователей
-        setInterval(() => {
-            const now = Date.now();
-            Object.keys(onlineUsers).forEach(userId => {
-                if (now - onlineUsers[userId].timestamp > 60000) {
-                    db.ref('online/' + userId).remove();
+        function getRandomColor() {
+            const colors = [
+                '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981',
+                '#3b82f6', '#ef4444', '#84cc16', '#06b6d4', '#8b5cf6'
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function openImageModal(src) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4';
+            modal.onclick = () => modal.remove();
+            modal.innerHTML = `
+                <div class="relative max-w-4xl max-h-[90vh]" onclick="event.stopPropagation()">
+                    <img src="${src}" class="max-w-full max-h-[90vh] rounded-lg">
+                    <button onclick="this.closest('div').remove()" 
+                            class="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // ============= НАСТРОЙКА СОБЫТИЙ =============
+        function setupEventListeners() {
+            // Отправка по Enter
+            document.getElementById('messageInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
                 }
             });
-        }, 60000);
+            
+            // Индикатор набора текста
+            document.getElementById('messageInput').addEventListener('input', function() {
+                if (this.value.trim()) {
+                    startTyping();
+                } else {
+                    stopTyping();
+                }
+            });
+            
+            // Сохранение имени
+            document.getElementById('saveNameBtn').addEventListener('click', function() {
+                const newName = document.getElementById('userNameInput').value.trim();
+                if (newName) {
+                    currentUser.name = newName;
+                    localStorage.setItem('userName', newName);
+                    document.getElementById('userNameDisplay').textContent = newName;
+                    setUserOnline();
+                    showNotification('Имя сохранено!', 'success');
+                    document.getElementById('userMenu').classList.add('hidden');
+                }
+            });
+            
+            // Меню пользователя
+            document.getElementById('userMenuBtn').addEventListener('click', function() {
+                const menu = document.getElementById('userMenu');
+                menu.classList.toggle('hidden');
+            });
+            
+            // Прикрепление файлов
+            document.getElementById('attachBtn').addEventListener('click', function() {
+                const menu = document.getElementById('attachMenu');
+                menu.classList.toggle('hidden');
+            });
+            
+            // Закрытие меню при клике снаружи
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#userMenuBtn')) {
+                    document.getElementById('userMenu').classList.add('hidden');
+                }
+                if (!e.target.closest('#attachBtn')) {
+                    document.getElementById('attachMenu').classList.add('hidden');
+                }
+                if (!e.target.closest('#emojiPicker') && !e.target.closest('.fa-smile')) {
+                    hideEmojiPicker();
+                }
+            });
+            
+            // Очистка чата
+            document.getElementById('clearChatBtn').addEventListener('click', clearAllMessages);
+            
+            // Экспорт чата
+            document.getElementById('exportChatBtn').addEventListener('click', exportChat);
+            
+            // Переключение темы
+            document.querySelectorAll('.theme-dot').forEach(dot => {
+                dot.addEventListener('click', function() {
+                    document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+                    this.classList.add('active');
+                    document.body.className = `text-gray-100 theme-${this.dataset.theme}`;
+                    localStorage.setItem('theme', this.dataset.theme);
+                });
+            });
+            
+            // Восстановление темы
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.querySelector(`.theme-dot[data-theme="${savedTheme}"]`).click();
+            
+            // Загрузка файлов
+            setupFileUpload();
+        }
+
+        // ============= ЭКСПОРТ ЧАТА =============
+        function exportChat() {
+            const messagesRef = database.ref('messages');
+            messagesRef.once('value', (snapshot) => {
+                const messages = snapshot.val() || {};
+                const chatText = Object.values(messages)
+                    .map(msg => `[${formatTime(msg.timestamp)}] ${msg.userName}: ${msg.text || '(вложение)'}`)
+                    .join('\n');
+                
+                const blob = new Blob([chatText], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `chat-export-${new Date().toISOString().split('T')[0]}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showNotification('Чат экспортирован!', 'success');
+            });
+        }
+
+        // ============= СОХРАНЕНИЕ ПРИ ЗАКРЫТИИ =============
+        window.addEventListener('beforeunload', () => {
+            database.ref(`users/${currentUser.id}`).update({
+                isOnline: false,
+                lastActive: Date.now()
+            });
+        });
     </script>
 </body>
 </html>
